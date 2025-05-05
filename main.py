@@ -94,8 +94,8 @@ B_SPIO = B(0,0,max_height - 0.045) #the sample is 45 mm from the top
 print(B_SPIO)
 
 #meshgrid to display:
-i = np.linspace(-2*R, 2*R, 10)
-j = np.linspace(0, 2*max_height, 10)
+i = np.linspace(-2*R, 2*R, 5)
+j = np.linspace(0, 2*max_height, 5)
 xi,yi,zi = np.meshgrid(i,i,j)
 
 #get the whole field by vectorizing the result of calling B with the meshgrid elements:
@@ -106,10 +106,14 @@ By = B_field[:,:,:,1]
 Bz = B_field[:,:,:,2]
 
 #plot everything
+lx_flat = np.concatenate([lx[str(i)] for i in range(num_coils)])
+ly_flat = np.concatenate([ly[str(i)] for i in range(num_coils)])
+lz_flat = np.concatenate([lz[str(i)] for i in range(num_coils)])
+
 data = go.Cone(x=xi.ravel(), y = yi.ravel(), z=zi.ravel(), u =Bx.ravel(),
                v=By.ravel(), w = Bz.ravel())
 fig = go.Figure(data= data)
-fig.add_scatter3d(x=lx, y=ly, z=lz, mode='lines', line=dict(color= 'black'))
+fig.add_scatter3d(x=lx_flat, y=ly_flat, z=lz_flat, mode='lines', line=dict(color= 'black'))
 
 fig.show()
 
@@ -121,7 +125,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
 # Plot the current path
-ax.plot(lx, ly, lz, label='Current Path', color='black')
+ax.plot(lx_flat, ly_flat, lz_flat, label='Current Path', color='black')
 
 # Plot the magnetic field vectors
 ax.quiver(xi, yi, zi, Bx, By, Bz, length=0.01, normalize=True, color='blue')
