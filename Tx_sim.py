@@ -3,8 +3,9 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import sympy as sp
-from scipy.integrate import quad
+from scipy.integrate import quad, dblquad
 import plotly.graph_objects as go
+from scipy.interpolate import RegularGridInterpolator
 
 R= 15 * 1e-3 #15 mm
 muo = 4 * np.pi * 1e-7
@@ -100,3 +101,53 @@ fig = go.Figure(data= data)
 fig.add_scatter3d(x=lx, y=ly, z=lz, mode='lines', line=dict(color= 'black'))
 
 fig.show()
+
+############# Finding the Inductance ##############
+# Compute flux through one turn (central cross-section of coil)
+k = np.linspace(height/2 - 1e-3, height/2 + 1e-3, int(num_points**(1/3)))  # was constant before
+xi, yi, zi = np.meshgrid(i, j, k, indexing='ij')  # 'ij' indexing for correct shape
+
+grid_points = [i, j, k]  # x, y, z axes
+Bz_interp = RegularGridInterpolator((i, j, k), Bz)  # 3D interpolator
+
+def Bz_center(r, phi):
+    xj = r * np.cos(phi)
+    yj = r * np.sin(phi)
+    zj = height / 2
+    try:
+        Bz_val = Bz_interp((xj, yj, zj))
+    except ValueError:
+        Bz_val = 0  # out of bounds
+    return Bz_val * r
+
+flux, error = dblquad(Bz_center,
+            0, 2 * np.pi,
+            lambda phi: 0, lambda phi: R)
+
+total_flux = flux * n_turns
+
+L = total_flux/I
+
+print(f"Inductance: {L:.3e} H")
+
+#Comparing to Standard Solenoid inductance formula:
+L = (muo * (n_turns**2)*np.pi * (R**2))/height
+
+print(f"Standard Solenoid Inductance: {L:.3e} H")
+
+#Computing using energy:
+i = np.linspace(-100*R, 100*R, 3000)
+j = np.linspace(-100*R, 100*R, 3000)
+k = np.linspace(0, height, 3000)
+
+dx = i[1] - i[0]
+dy = j[1] - j[0]
+dz = k[1] - k[0]
+
+dV = dx * dy * dz
+
+B_squared = Bx**2 + By**2 + Bz**2
+U = (1 / (2 * muo)) * np.sum(B_squared * dV)
+L = 2 * U / I**2
+
+print(f"Energy Based Inductance: {L:.3e} H")

@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sympy as sp
-from sympy.vector import cross
-from scipy.integrate import quad
+from scipy.interpolate import RegularGridInterpolator
+from scipy.integrate import quad, dblquad
 import plotly.graph_objects as go
 
 #curve path of current:
@@ -94,8 +94,11 @@ B_SPIO = B(0,0,max_height - 0.045) #the sample is 45 mm from the top
 print(B_SPIO)
 
 #meshgrid to display:
-i = np.linspace(-2*R, 2*R, 5)
-j = np.linspace(0, 2*max_height, 5)
+num_points = 125
+dim = 3 #there are 3 dimensions (x,y,z)
+n = int(num_points**(1/dim)) #per dimension
+i = np.linspace(-2*R, 2*R, n)
+j = np.linspace(0, 2*max_height, n)
 xi,yi,zi = np.meshgrid(i,i,j)
 
 #get the whole field by vectorizing the result of calling B with the meshgrid elements:
@@ -138,3 +141,32 @@ ax.set_title('Magnetic Field Vectors and Current Path')
 
 plt.legend()
 plt.show()
+
+#Inductance Calculation:
+height = max_height
+
+k = np.linspace(height/2 - 1e-3, height/2 + 1e-3, int(num_points**(1/3)))  # was constant before
+xi, yi, zi = np.meshgrid(i, j, k, indexing='ij')  # 'ij' indexing for correct shape
+
+grid_points = [i, j, k]  # x, y, z axes
+Bz_interp = RegularGridInterpolator((i, j, k), Bz)  # 3D interpolator
+
+def Bz_center(r, phi):
+    xj = r * np.cos(phi)
+    yj = r * np.sin(phi)
+    zj = height / 2
+    try:
+        Bz_val = Bz_interp((xj, yj, zj))
+    except ValueError:
+        Bz_val = 0  # out of bounds
+    return Bz_val * r
+
+flux, error = dblquad(Bz_center,
+            0, 2 * np.pi,
+            lambda phi: 0, lambda phi: R)
+
+total_flux = flux * n_turns
+
+L = total_flux/I
+
+print(f"Inductance: {L:.3e} H")
