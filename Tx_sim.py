@@ -6,13 +6,15 @@ import sympy as sp
 from scipy.integrate import quad, dblquad
 import plotly.graph_objects as go
 from scipy.interpolate import RegularGridInterpolator
+import functions as analyze
 
-R= 15 * 1e-3 #15 mm
+R= 17.5 * 1e-3 #15 mm
 muo = 4 * np.pi * 1e-7
 I = 5 #A
-n_turns = 206
-height = 73 * 1e-3 #73mm
-dtps = 10000 #number of data points
+n_turns = 201
+height = 65 * 1e-3 #73mm
+dtps = 100000
+#number of data points
 
 phi = np.linspace(0, 2 * np.pi * n_turns, dtps) #the azimuthal length (x-y plane)
 
@@ -57,6 +59,9 @@ j = np.linspace(-2*R_nmr, 2*R_nmr, int(num_points**(1/3)))
 k= np.ones(int(num_points**(1/3))) * (height/2) #in the middle of the coil
 
 xi, yi, zi = np.meshgrid(i, j, k)
+
+B_center = B(0, 0, height/2)
+print("Magnetic field at the center:", B_center)
 
 #get the whole field by vectorizing the result of calling B with the meshgrid elements:
 B_field = np.vectorize(B, signature='(),(),()->(n)')(xi,yi,zi) #the signature in this
@@ -136,13 +141,22 @@ L = (muo * (n_turns**2)*np.pi * (R**2))/height
 print(f"Standard Solenoid Inductance: {L:.3e} H")
 
 #Computing using energy:
-i = np.linspace(-100*R, 100*R, 3000)
-j = np.linspace(-100*R, 100*R, 3000)
-k = np.linspace(0, height, 3000)
+i = np.linspace(-100*R, 100*R, n)
+j = np.linspace(-100*R, 100*R, n)
+k = np.linspace(0, height, n)
 
 dx = i[1] - i[0]
 dy = j[1] - j[0]
 dz = k[1] - k[0]
+
+xi, yi, zi = np.meshgrid(i, j, k)
+
+#get the whole field by vectorizing the result of calling B with the meshgrid elements:
+B_field = np.vectorize(B, signature='(),(),()->(n)')(xi,yi,zi) #the signature in this
+                                    # case is about joining all three inputs into one vector source (n)
+Bx = B_field[:,:,:,0]
+By = B_field[:,:,:,1]
+Bz = B_field[:,:,:,2]
 
 dV = dx * dy * dz
 
@@ -151,3 +165,11 @@ U = (1 / (2 * muo)) * np.sum(B_squared * dV)
 L = 2 * U / I**2
 
 print(f"Energy Based Inductance: {L:.3e} H")
+
+#Neumann inductance formula (in functions):
+wire_radius = 2e-3  # Example: 0.5 mm copper wire
+Y = 0.0  # For DC, set Y = 0
+
+L_corr, L_uncorr = analyze.neumann_self_inductance(lx, ly, lz, wire_radius, Y)
+print(f"Neumann Inductance (corrected): {L_corr:.6e} H")
+print(f"Neumann Inductance (uncorrected): {L_uncorr:.6e} H")
