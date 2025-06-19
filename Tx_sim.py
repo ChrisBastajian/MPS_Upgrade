@@ -8,11 +8,11 @@ import plotly.graph_objects as go
 from scipy.interpolate import RegularGridInterpolator
 import functions as analyze
 
-R= 17.5 * 1e-3 #15 mm
+R= 17.5 * 1e-3 #17.5 mm
 muo = 4 * np.pi * 1e-7
 I = 5 #A
-n_turns = 201
-height = 65 * 1e-3 #73mm
+n_turns = 65 *3
+height = 65 * 1e-3 #65mm
 dtps = 100000
 #number of data points
 
@@ -50,13 +50,16 @@ def B(x, y, z):
     ]))
 
 #computing integral over NMR Tube diameter:
-D_nmr = 5 * 1e-3 #approx. 5 mm
+D_nmr = 10 * 1e-3 #approx. 10 mm
 R_nmr = D_nmr/2
+lnmr = 10 * 1e-3 # 10mm height variance for the sample
 
 num_points = 125#num_points = 64 #4*4*4=64
 i = np.linspace(-2*R_nmr, 2*R_nmr, int(num_points**(1/3)))
 j = np.linspace(-2*R_nmr, 2*R_nmr, int(num_points**(1/3)))
-k= np.ones(int(num_points**(1/3))) * (height/2) #in the middle of the coil
+kprime= np.ones(int(num_points**(1/3))) * (height/2) #in the middle of the coil
+knmr = np.linspace(-lnmr/2, lnmr/2, int(num_points**(1/3)) )
+k= kprime + knmr
 
 xi, yi, zi = np.meshgrid(i, j, k)
 
