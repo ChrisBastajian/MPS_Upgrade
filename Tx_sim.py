@@ -1,3 +1,7 @@
+#This script simulates the Tx coil
+#Assumptions:
+#(1) Coil is in Free space
+#(2) Coil thickness is negligible (1 layer for all turns
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
@@ -11,7 +15,7 @@ import functions as analyze
 R= 17.5 * 1e-3 #17.5 mm
 muo = 4 * np.pi * 1e-7
 I = 5 #A
-n_turns = 65 *3
+n_turns = 50 * 4
 height = 65 * 1e-3 #65mm
 dtps = 100000
 #number of data points

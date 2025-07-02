@@ -1,3 +1,5 @@
+#In this script, the magnetic field calculated does not account for the thickness of the wires
+#The script also does not account for the number of wires.
 import numpy as np
 import matplotlib.pyplot as plt
 import sympy as sp
@@ -6,17 +8,16 @@ from scipy.integrate import quad, dblquad
 import plotly.graph_objects as go
 
 #curve path of current:
-R = 0.042 # the radius of the curve itself (not the distance for each vector) in m
+R = 0.0175 # the radius of the curve itself (not the distance for each vector) in m
 mu0 = 4 * np.pi * 1e-7
-I = 5 #current intensity in A
-n_turns = 636
-max_height = 0.133
+I = 1 #current intensity in A
+n_turns = 49*4
+max_height = 0.065
 
 #finding thickness of litz wire:
-total_thickness = 0.008 #mm
 data_points_coil = 100000
-num_coils = 4
-coil_thickness = total_thickness/num_coils
+num_coils = 4 #4 layers of coils
+coil_thickness = 2 * 1e-3
 
 def coil_arrays(num_coils, coil_thickness):
     phi = {}
